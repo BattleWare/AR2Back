@@ -1,0 +1,101 @@
+local player = game.Players.LocalPlayer
+
+local espObjects = {}
+
+local function applyESP(character)
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    if espObjects[character] then return end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = character
+    highlight.FillTransparency = 1
+    highlight.OutlineTransparency = 0
+    highlight.OutlineColor = Color3.fromRGB(230, 230, 230)
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Parent = character
+    billboard.Adornee = character:FindFirstChild("Head") or character.HumanoidRootPart
+    billboard.Size = UDim2.new(0, 150, 0, 48)
+    billboard.StudsOffset = Vector3.new(0, 2.4, 0)
+    billboard.AlwaysOnTop = true
+
+    local container = Instance.new("Frame", billboard)
+    container.Size = UDim2.new(1, 0, 1, 0)
+    container.BackgroundTransparency = 1
+
+    local function label(y, h, size, bold)
+        local t = Instance.new("TextLabel")
+        t.Parent = container
+        t.Size = UDim2.new(1, 0, 0, h)
+        t.Position = UDim2.new(0, 0, 0, y)
+        t.BackgroundTransparency = 1
+        t.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
+        t.TextSize = size
+        t.TextStrokeTransparency = 0.25
+        t.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        t.TextXAlignment = Enum.TextXAlignment.Left
+        return t
+    end
+
+    local nameLabel = label(0, 16, 13, true)
+    nameLabel.TextColor3 = Color3.fromRGB(245, 245, 245)
+
+    local distLabel = label(16, 14, 11)
+    distLabel.TextColor3 = Color3.fromRGB(200, 220, 255)
+
+    local hpLabel = label(30, 14, 11)
+    hpLabel.TextColor3 = Color3.fromRGB(255, 170, 170)
+
+    espObjects[character] = {
+        highlight,
+        nameLabel,
+        distLabel,
+        hpLabel
+    }
+end
+
+local function updateESP()
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    local myPos = player.Character.HumanoidRootPart.Position
+
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            applyESP(plr.Character)
+
+            local data = espObjects[plr.Character]
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            local hum = plr.Character:FindFirstChild("Humanoid")
+
+            if hrp and hum and data then
+                local dist = (hrp.Position - myPos).Magnitude
+                local hp = math.floor(hum.Health)
+                local maxHp = math.floor(hum.MaxHealth)
+
+                local hpColor = Color3.fromRGB(255, 120, 120)
+                if hp > maxHp * 0.6 then
+                    hpColor = Color3.fromRGB(140, 255, 140)
+                elseif hp > maxHp * 0.3 then
+                    hpColor = Color3.fromRGB(255, 220, 140)
+                end
+
+                local distColor = Color3.fromRGB(210, 230, 255)
+                if dist < 20 then
+                    distColor = Color3.fromRGB(255, 120, 120)
+                end
+
+                data[2].Text = plr.Name
+                data[3].Text = string.format("[ %.0fm ]", dist)
+                data[3].TextColor3 = distColor
+                data[4].Text = string.format("%d / %d HP", hp, maxHp)
+                data[4].TextColor3 = hpColor
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while true do
+        updateESP()
+        task.wait(0.01)
+    end
+end)
