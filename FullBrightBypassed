@@ -1,0 +1,36 @@
+local Lighting = game:GetService("Lighting")
+
+local function applyFullbright()
+    Lighting.Brightness = 3
+    Lighting.ClockTime = 14
+    Lighting.FogEnd = 1e9
+    Lighting.GlobalShadows = false
+    Lighting.OutdoorAmbient = Color3.new(1,1,1)
+    Lighting.Ambient = Color3.new(1,1,1)
+
+    for _, v in ipairs(Lighting:GetChildren()) do
+        if v:IsA("Atmosphere") then
+            v.Density = 0
+            v.Offset = 0
+            v.Haze = 0
+            v.Glare = 0
+        elseif v:IsA("BloomEffect")
+        or v:IsA("SunRaysEffect")
+        or v:IsA("ColorCorrectionEffect")
+        or v:IsA("DepthOfFieldEffect") then
+            v.Enabled = false
+        end
+    end
+end
+
+applyFullbright()
+
+Lighting:GetPropertyChangedSignal("Brightness"):Connect(applyFullbright)
+Lighting:GetPropertyChangedSignal("ClockTime"):Connect(applyFullbright)
+Lighting:GetPropertyChangedSignal("FogEnd"):Connect(applyFullbright)
+Lighting:GetPropertyChangedSignal("GlobalShadows"):Connect(applyFullbright)
+
+Lighting.ChildAdded:Connect(function()
+    task.wait()
+    applyFullbright()
+end)
